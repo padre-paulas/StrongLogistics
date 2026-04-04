@@ -77,12 +77,14 @@ export default function DashboardPage() {
               🤖 Auto-assign Orders
             </button>
           </RoleGuard>
-          <button
-            onClick={() => setShowCreate(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
-          >
-            + Create Order
-          </button>
+          <RoleGuard allowedRoles={['admin', 'dispatcher']}>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+            >
+              + Create Order
+            </button>
+          </RoleGuard>
         </div>
       </div>
 
