@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
@@ -15,7 +14,6 @@ const pageTitles: Record<string, string> = {
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const title = pageTitles[location.pathname] || 'LogiFlow';
-  const [_sidebarOpen, _setSidebarOpen] = useState(true);
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
