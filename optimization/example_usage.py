@@ -4,8 +4,18 @@ This demonstrates how to set up and solve a vehicle routing problem
 with depots, suppliers, delivery points, and capacity constraints.
 """
 
-from .models import Location, Vehicle, Order, NodeType
-from .ortools_wrapper import LogisticsOptimizer, create_distance_matrix
+import sys
+import os
+
+# Allow direct execution without module errors
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+try:
+    from optimization.models import Location, Vehicle, Order, NodeType
+    from optimization.ortools_wrapper import LogisticsOptimizer, create_distance_matrix
+except ImportError:
+    from .models import Location, Vehicle, Order, NodeType
+    from .ortools_wrapper import LogisticsOptimizer, create_distance_matrix
 
 
 def run_example_optimization():
@@ -298,7 +308,7 @@ if __name__ == "__main__":
     ]
 
     orders = [
-        Order(id=1, from_location_id=1, to_location_id=2, volume=5.0)
+    
     ]
 
     vehicles = [

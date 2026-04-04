@@ -307,19 +307,45 @@ class LogisticsOptimizer:
                     end = int(order.time_window_end if order.time_window_end is not None else 86400 * 7)
                     time_dimension.CumulVar(delivery_index).SetRange(start, end)
     
-    def _setup_priority_costs(self, orders: List[Order]):
+    def _setup_node_disjunctions(self, orders: List[Order]):
         """
-        Set up priority-based routing costs.
-        Higher priority orders get visited earlier.
+        Set up disjunctions (penalties for skipping nodes).
+        This allows the solver to skip unused locations instead of crashing.
         """
+        active_nodes = set()
+        
         # Add penalty for unserved high-priority orders
         for order in orders:
+            pickup_index = self.location_id_to_index[order.from_location_id]
+            pickup_node = self.manager.NodeToIndex(pickup_index)
+            
             delivery_index = self.location_id_to_index[order.to_location_id]
             delivery_node = self.manager.NodeToIndex(delivery_index)
             
             # Higher penalty for higher priority orders
             penalty = order.priority * 100000
-            self.routing.AddDisjunction([delivery_node], penalty)
+            
+            if pickup_node != -1:
+                self.routing.AddDisjunction([pickup_node], penalty)
+                active_nodes.add(pickup_node)
+                
+            if delivery_node != -1:
+                self.routing.AddDisjunction([delivery_node], penalty)
+                active_nodes.add(delivery_node)
+                
+        # For ANY un-ordered location on the map, we MUST give it a 0 penalty 
+        # so OR-Tools allows vehicles to skip them entirely.
+        depots = set()
+        for v in self.vehicles:
+            depots.add(self.manager.NodeToIndex(self.location_id_to_index[v.start_depot_id]))
+            depots.add(self.manager.NodeToIndex(self.location_id_to_index[v.end_depot_id]))
+            
+        num_locations = len(self.locations)
+        for i in range(num_locations):
+            idx = self.manager.NodeToIndex(i)
+            # If not a required depot, and not an active order node, allow skipping for free
+            if idx != -1 and idx not in depots and idx not in active_nodes:
+                self.routing.AddDisjunction([idx], 0)
     
     def _extract_solution(self, solution) -> OptimizationResult:
         """
@@ -561,8 +587,8 @@ class LogisticsOptimizer:
         # Setup time windows
         self._setup_time_windows()
         
-        # Setup priority costs (optional, comment out if not needed)
-        # self._setup_priority_costs(self.orders)
+        # Setup node disjunctions (handles priority and unused nodes)
+        self._setup_node_disjunctions(self.orders)
         
         # Set search parameters
         search_parameters = pywrapcp.DefaultRoutingSearchParameters()
