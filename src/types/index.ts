@@ -59,6 +59,8 @@ export interface Order {
   created_at: string;
   updated_at: string;
   status_history: StatusHistoryEntry[];
+  /** Computed urgency weight 0-100 (higher = more urgent). */
+  weight?: number;
 }
 
 export interface StatusHistoryEntry {
@@ -114,4 +116,39 @@ export interface NearbyPoint {
   point: DeliveryPoint;
   distance_km: number;
   available_quantity: number;
+}
+
+/**
+ * Represents a delivery point that is temporarily unreachable (road blocked,
+ * access denied, etc.).  Used by the adaptive routing subsystem.
+ */
+export interface RouteBlockage {
+  id: string;
+  point_id: number;
+  reason: string;
+  created_at: string;
+}
+
+/**
+ * A single candidate for route interception: a vehicle currently in transit
+ * to a lower-priority destination that can be redirected to serve an urgent
+ * critical order.
+ */
+export interface InterceptionCandidate {
+  transit_order: Order;
+  redirected_quantity: number;
+  distance_to_critical_km: number;
+  distance_saved_km: number;
+}
+
+/**
+ * Full interception plan produced by the adaptive routing algorithm (ALNS /
+ * Ant Colony Optimisation hybrid).  The dispatcher reviews candidates and
+ * confirms the best option.
+ */
+export interface InterceptionPlan {
+  plan_id: string;
+  urgent_order: Order;
+  candidates: InterceptionCandidate[];
+  algorithm: 'ALNS' | 'ACO';
 }

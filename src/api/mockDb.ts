@@ -14,7 +14,14 @@ import type {
   PaginatedResponse,
   RouteInfo,
   NearbyPoint,
+  RouteBlockage,
+  InterceptionCandidate,
+  InterceptionPlan,
 } from '../types';
+import {
+  calculateOrderWeight,
+  getStockRemainingPct,
+} from '../utils/weightCalculation';
 
 // ─── Static lookup data ───────────────────────────────────────────────────────
 
@@ -190,12 +197,27 @@ export const orders: Order[] = [
   },
 ];
 
+// ─── Blocked routes (unreachable delivery points) ─────────────────────────────
+
+export let blockedRoutes: RouteBlockage[] = [];
+
 // ─── Helper: simulate async delay ────────────────────────────────────────────
 
 function delay<T>(value: T, ms?: number): Promise<T>;
 function delay(value: void, ms?: number): Promise<void>;
 function delay<T>(value: T, ms = 300): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(value), ms));
+}
+
+// ─── Internal helpers ─────────────────────────────────────────────────────────
+
+/** Attaches a computed urgency weight to an order (non-mutating). */
+function withWeight(order: Order): Order {
+  const stockPct = getStockRemainingPct(
+    order.delivery_point.stock,
+    order.resource.id,
+  );
+  return { ...order, weight: calculateOrderWeight(order.priority, stockPct) };
 }
 
 // ─── API implementations ──────────────────────────────────────────────────────
@@ -207,7 +229,10 @@ export function mockFetchDashboardStats(): Promise<DashboardStats> {
     critical_priority: orders.filter((o) => o.priority === 'critical' && o.status === 'pending').length,
     pending_dispatch: orders.filter((o) => o.status === 'pending').length,
     available_drivers: drivers.filter((d) => d.is_available).length,
-    recent_orders: [...orders].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 5),
+    recent_orders: [...orders]
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      .slice(0, 5)
+      .map(withWeight),
   };
   return delay(stats);
 }
@@ -217,13 +242,13 @@ export function mockFetchOrders(params?: Record<string, string | number>): Promi
   if (params?.status) results = results.filter((o) => o.status === params.status);
   if (params?.priority) results = results.filter((o) => o.priority === params.priority);
   results.sort((a, b) => b.created_at.localeCompare(a.created_at));
-  return delay({ count: results.length, next: null, previous: null, results });
+  return delay({ count: results.length, next: null, previous: null, results: results.map(withWeight) });
 }
 
 export function mockFetchOrder(id: number): Promise<Order> {
   const order = orders.find((o) => o.id === id);
   if (!order) return Promise.reject(new Error('Order not found'));
-  return delay(order);
+  return delay(withWeight(order));
 }
 
 export function mockUpdateOrderStatus(id: number, status: string): Promise<Order> {
@@ -236,7 +261,7 @@ export function mockUpdateOrderStatus(id: number, status: string): Promise<Order
     timestamp: new Date().toISOString(),
     changed_by: 'Current User',
   });
-  return delay({ ...order });
+  return delay(withWeight({ ...order }));
 }
 
 let _nextId = orders.length + 1;
@@ -267,18 +292,22 @@ export function mockCreateOrder(payload: {
     status_history: [{ status: 'pending', timestamp: now, changed_by: 'Current User' }],
   };
   orders.unshift(newOrder);
-  return delay({ ...newOrder });
+  return delay(withWeight({ ...newOrder }));
 }
 
 let _planIdCounter = 1;
 
 export function mockAutoAssignOrders(): Promise<AutoAssignPlan> {
-  const pending = orders.filter((o) => o.status === 'pending');
+  // Sort pending orders by weight descending so highest-urgency orders are
+  // assigned first (simulating an ALNS-style priority-aware assignment).
+  const pending = [...orders.filter((o) => o.status === 'pending')].sort(
+    (a, b) => (withWeight(b).weight ?? 0) - (withWeight(a).weight ?? 0),
+  );
   const assignments = drivers.map((driver, i) => {
     const slice = pending.filter((_, idx) => idx % drivers.length === i);
     return {
       driver,
-      orders: slice,
+      orders: slice.map(withWeight),
       total_distance_km: Math.round(50 + Math.random() * 100),
       estimated_time_minutes: Math.round(60 + Math.random() * 120),
     };
@@ -309,9 +338,9 @@ export function mockFetchPoints(): Promise<DeliveryPoint[]> {
 }
 
 export function mockFetchPointOrders(pointId: number): Promise<Order[]> {
-  const result = orders.filter(
-    (o) => o.delivery_point.id === pointId && !['delivered', 'cancelled'].includes(o.status)
-  );
+  const result = orders
+    .filter((o) => o.delivery_point.id === pointId && !['delivered', 'cancelled'].includes(o.status))
+    .map(withWeight);
   return delay(result);
 }
 
@@ -362,4 +391,128 @@ export function mockFetchRouteInfo(_pointId: number): Promise<RouteInfo> {
     distance_km: Math.round(50 + Math.random() * 200),
     estimated_time_minutes: Math.round(45 + Math.random() * 180),
   });
+}
+
+// ─── Route blockage (unreachable delivery points) ─────────────────────────────
+
+let _blockageIdCounter = 1;
+
+export function mockGetBlockedRoutes(): Promise<RouteBlockage[]> {
+  return delay([...blockedRoutes]);
+}
+
+export function mockBlockRoute(pointId: number, reason: string): Promise<RouteBlockage> {
+  const existing = blockedRoutes.find((b) => b.point_id === pointId);
+  if (existing) return delay(existing);
+  const blockage: RouteBlockage = {
+    id: `block-${_blockageIdCounter++}`,
+    point_id: pointId,
+    reason,
+    created_at: new Date().toISOString(),
+  };
+  blockedRoutes.push(blockage);
+  return delay(blockage);
+}
+
+export function mockUnblockRoute(id: string): Promise<void> {
+  const idx = blockedRoutes.findIndex((b) => b.id === id);
+  if (idx !== -1) blockedRoutes.splice(idx, 1);
+  return delay(undefined as void);
+}
+
+export function mockIsPointBlocked(pointId: number): boolean {
+  return blockedRoutes.some((b) => b.point_id === pointId);
+}
+
+// ─── Route interception (ALNS / ACO adaptive routing) ────────────────────────
+
+let _interceptPlanCounter = 1;
+
+/**
+ * Scans vehicles currently "In Transit" and identifies candidates that can be
+ * intercepted and redirected to serve the supplied urgent (critical) order.
+ *
+ * Algorithm label: ALNS (Adaptive Large Neighbourhood Search) — chosen because
+ * it handles dynamic changes (route disappearance, urgent insertions) through
+ * iterative destroy-and-repair cycles.  A real integration would use Google
+ * OR-Tools which ships hybrid ALNS/ACO solvers.
+ */
+export function mockScanForInterception(urgentOrderId: number): Promise<InterceptionPlan> {
+  const urgentOrder = orders.find((o) => o.id === urgentOrderId);
+  if (!urgentOrder) return Promise.reject(new Error('Order not found'));
+
+  const urgentWeight = withWeight(urgentOrder).weight ?? 0;
+  const criticalPoint = urgentOrder.delivery_point;
+
+  // Find in_transit orders whose destination has a lower urgency weight.
+  const candidates: InterceptionCandidate[] = orders
+    .filter((o) => o.status === 'in_transit' && o.id !== urgentOrderId)
+    .filter((o) => (withWeight(o).weight ?? 0) < urgentWeight)
+    .map((transitOrder) => {
+      const origin = transitOrder.delivery_point;
+      const latDiff = criticalPoint.latitude - origin.latitude;
+      const lngDiff = criticalPoint.longitude - origin.longitude;
+      // Euclidean approximation (×111 km per degree)
+      const distanceToCritical = Math.round(Math.sqrt(latDiff * latDiff + lngDiff * lngDiff) * 111);
+      return {
+        transit_order: withWeight(transitOrder),
+        redirected_quantity: Math.min(transitOrder.quantity, urgentOrder.quantity),
+        distance_to_critical_km: distanceToCritical,
+        distance_saved_km: Math.max(5, Math.round(distanceToCritical * 0.3)),
+      } satisfies InterceptionCandidate;
+    })
+    .sort((a, b) => a.distance_to_critical_km - b.distance_to_critical_km);
+
+  const plan: InterceptionPlan = {
+    plan_id: `intercept-${_interceptPlanCounter++}`,
+    urgent_order: withWeight(urgentOrder),
+    candidates,
+    algorithm: 'ALNS',
+  };
+  return delay(plan, 500);
+}
+
+/**
+ * Confirms a route interception: the selected transit order is redirected to
+ * serve the urgent order first (partial cargo transfer), then continues to its
+ * original destination.
+ */
+export function mockConfirmInterception(
+  planId: string,
+  urgentOrderId: number,
+  transitOrderId: number,
+): Promise<void> {
+  const urgentOrder = orders.find((o) => o.id === urgentOrderId);
+  const transitOrder = orders.find((o) => o.id === transitOrderId);
+  if (!urgentOrder || !transitOrder || !transitOrder.driver) {
+    return Promise.reject(new Error('Invalid interception plan'));
+  }
+
+  const now = new Date().toISOString();
+  const note = `Route intercepted — redirected from ${transitOrder.delivery_point.name} (plan ${planId})`;
+
+  // The urgent order is now being served by the intercepted vehicle.
+  urgentOrder.status = 'dispatched';
+  urgentOrder.driver = transitOrder.driver;
+  urgentOrder.updated_at = now;
+  urgentOrder.notes = (urgentOrder.notes ? urgentOrder.notes + ' | ' : '') + note;
+  urgentOrder.status_history.push({
+    status: 'dispatched',
+    timestamp: now,
+    changed_by: 'Route-Intercept',
+  });
+
+  // Mark the transit order as rerouted via a note in its history.
+  transitOrder.notes =
+    (transitOrder.notes ? transitOrder.notes + ' | ' : '') +
+    `Rerouted to serve critical order #${urgentOrder.order_id} first`;
+  transitOrder.updated_at = now;
+  transitOrder.status_history.push({
+    status: 'in_transit',
+    timestamp: now,
+    changed_by: 'Route-Intercept',
+    notes: `Rerouted → ${urgentOrder.delivery_point.name}`,
+  });
+
+  return delay(undefined as void, 300);
 }

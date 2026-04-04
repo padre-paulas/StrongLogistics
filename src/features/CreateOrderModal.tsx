@@ -5,6 +5,7 @@ import { createOrder } from '../api/orders';
 import { fetchPoints } from '../api/points';
 import { fetchResources } from '../api/resources';
 import { mockFetchRouteInfo } from '../api/mockDb';
+import { isPointBlocked } from '../api/routing';
 import type { Priority, RouteInfo } from '../types';
 import { useToast } from '../context/ToastContext';
 
@@ -12,6 +13,8 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   initialPointId?: number;
+  /** Called with the new order's id after a critical order is created. */
+  onCriticalOrderCreated?: (orderId: number) => void;
 }
 
 interface FormData {
@@ -22,7 +25,7 @@ interface FormData {
   notes?: string;
 }
 
-export default function CreateOrderModal({ isOpen, onClose, initialPointId }: Props) {
+export default function CreateOrderModal({ isOpen, onClose, initialPointId, onCriticalOrderCreated }: Props) {
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   const { addToast } = useToast();
   const qc = useQueryClient();
@@ -36,9 +39,11 @@ export default function CreateOrderModal({ isOpen, onClose, initialPointId }: Pr
 
   const selectedPointId = watch('delivery_point');
   const selectedResourceId = watch('resource');
+  const selectedPriority = watch('priority');
 
   const selectedPoint = points.find((p) => p.id === Number(selectedPointId));
   const currentStock = selectedPoint?.stock?.find((s) => s.resource_id === Number(selectedResourceId));
+  const pointBlocked = selectedPointId ? isPointBlocked(Number(selectedPointId)) : false;
 
   useEffect(() => {
     if (selectedPointId) {
@@ -50,12 +55,15 @@ export default function CreateOrderModal({ isOpen, onClose, initialPointId }: Pr
 
   const mutation = useMutation({
     mutationFn: createOrder,
-    onSuccess: () => {
+    onSuccess: (newOrder) => {
       qc.invalidateQueries({ queryKey: ['orders'] });
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });
       addToast('Order created successfully', 'success');
       reset();
       onClose();
+      if (newOrder.priority === 'critical' && onCriticalOrderCreated) {
+        onCriticalOrderCreated(newOrder.id);
+      }
     },
     onError: () => addToast('Failed to create order', 'error'),
   });
@@ -75,12 +83,23 @@ export default function CreateOrderModal({ isOpen, onClose, initialPointId }: Pr
             <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Point</label>
             <select
               {...register('delivery_point', { required: 'Required', valueAsNumber: true })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                pointBlocked ? 'border-red-400 bg-red-50' : 'border-gray-300'
+              }`}
             >
               <option value="">Select point...</option>
-              {points.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              {points.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {isPointBlocked(p.id) ? '🚫 ' : ''}{p.name}
+                </option>
+              ))}
             </select>
             {errors.delivery_point && <p className="text-red-500 text-xs mt-1">{errors.delivery_point.message}</p>}
+            {pointBlocked && (
+              <p className="text-red-600 text-xs mt-1 flex items-center gap-1">
+                🚫 Route to this point is currently blocked. Delivery may not be possible.
+              </p>
+            )}
           </div>
 
           <div>
@@ -101,9 +120,16 @@ export default function CreateOrderModal({ isOpen, onClose, initialPointId }: Pr
             </div>
           )}
 
-          {routeInfo && (
+          {routeInfo && !pointBlocked && (
             <div className="bg-green-50 rounded-lg p-3 text-sm text-green-700">
               📍 Distance: <strong>{routeInfo.distance_km?.toFixed(1)} km</strong> · ⏱ ETA: <strong>{routeInfo.estimated_time_minutes} min</strong>
+            </div>
+          )}
+
+          {selectedPriority === 'critical' && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm text-orange-700">
+              ⚡ <strong>Critical priority</strong> — after creation the system will automatically scan
+              for in-transit vehicles that can be intercepted and redirected.
             </div>
           )}
 
