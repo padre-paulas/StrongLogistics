@@ -115,7 +115,7 @@ export default function AdminPage() {
               tab === t ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-900'
             }`}
           >
-            {t === 'demand' ? '📊 Demand' : t}
+            {t === 'demand' ? '📊 Demand' : t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
         ))}
       </div>
