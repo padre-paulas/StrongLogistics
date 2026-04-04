@@ -1,31 +1,27 @@
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../context/AuthContext';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import type { Role } from '../types';
 
 interface LoginForm {
   email: string;
-  password: string;
+  role: Role;
 }
 
 export default function LoginPage() {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [error, setError] = useState('');
-  const { register, handleSubmit, formState: { isSubmitting, errors } } = useForm<LoginForm>();
+  const { register, handleSubmit, formState: { isSubmitting, errors } } = useForm<LoginForm>({
+    defaultValues: { role: 'driver' },
+  });
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
 
   const onSubmit = async (data: LoginForm) => {
-    setError('');
-    try {
-      await login(data.email, data.password);
-      navigate('/dashboard', { replace: true });
-    } catch {
-      setError('Invalid email or password. Please try again.');
-    }
+    await login(data.email, data.role);
+    navigate('/dashboard', { replace: true });
   };
 
   return (
@@ -47,16 +43,17 @@ export default function LoginPage() {
             {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input
-              type="password"
-              {...register('password', { required: 'Password is required' })}
+            <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+            <select
+              {...register('role', { required: 'Role is required' })}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="••••••••"
-            />
-            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
+            >
+              <option value="driver">Driver</option>
+              <option value="dispatcher">Dispatcher</option>
+              <option value="admin">Admin</option>
+            </select>
+            {errors.role && <p className="text-red-500 text-xs mt-1">{errors.role.message}</p>}
           </div>
-          {error && <p className="text-red-500 text-sm bg-red-50 p-3 rounded-lg">{error}</p>}
           <button
             type="submit"
             disabled={isSubmitting}

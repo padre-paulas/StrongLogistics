@@ -1,22 +1,18 @@
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../context/AuthContext';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
 import type { Role } from '../types';
 
 interface SignUpForm {
   full_name: string;
   email: string;
-  password: string;
-  confirmPassword: string;
   role: Role;
 }
 
 export default function SignUpPage() {
   const { signup, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [error, setError] = useState('');
-  const { register, handleSubmit, watch, formState: { isSubmitting, errors } } = useForm<SignUpForm>({
+  const { register, handleSubmit, formState: { isSubmitting, errors } } = useForm<SignUpForm>({
     defaultValues: { role: 'driver' },
   });
 
@@ -25,13 +21,8 @@ export default function SignUpPage() {
   }
 
   const onSubmit = async (data: SignUpForm) => {
-    setError('');
-    try {
-      await signup(data.email, data.password, data.full_name, data.role);
-      navigate('/dashboard', { replace: true });
-    } catch {
-      setError('Registration failed. Please check your details and try again.');
-    }
+    await signup(data.email, data.full_name, data.role);
+    navigate('/dashboard', { replace: true });
   };
 
   return (
@@ -74,30 +65,6 @@ export default function SignUpPage() {
             </select>
             {errors.role && <p className="text-red-500 text-xs mt-1">{errors.role.message}</p>}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input
-              type="password"
-              {...register('password', { required: 'Password is required', minLength: { value: 8, message: 'Password must be at least 8 characters' } })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="••••••••"
-            />
-            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-            <input
-              type="password"
-              {...register('confirmPassword', {
-                required: 'Please confirm your password',
-                validate: (val) => val === watch('password') || 'Passwords do not match',
-              })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="••••••••"
-            />
-            {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword.message}</p>}
-          </div>
-          {error && <p className="text-red-500 text-sm bg-red-50 p-3 rounded-lg">{error}</p>}
           <button
             type="submit"
             disabled={isSubmitting}
