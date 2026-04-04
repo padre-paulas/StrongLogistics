@@ -5,8 +5,10 @@ import {
   mockCreateOrder,
   mockAutoAssignOrders,
   mockConfirmAutoAssign,
+  mockScanForInterception,
+  mockConfirmInterception,
 } from './mockDb';
-import type { Order, PaginatedResponse, AutoAssignPlan } from '../types';
+import type { Order, PaginatedResponse, AutoAssignPlan, InterceptionPlan } from '../types';
 
 export async function fetchOrders(params?: Record<string, string | number>): Promise<PaginatedResponse<Order>> {
   return mockFetchOrders(params);
@@ -37,3 +39,24 @@ export async function autoAssignOrders(): Promise<AutoAssignPlan> {
 export async function confirmAutoAssign(planId: string): Promise<void> {
   return mockConfirmAutoAssign(planId);
 }
+
+/**
+ * Scans in-transit orders and returns an interception plan for the specified
+ * urgent order.  Uses an ALNS-based adaptive routing strategy.
+ */
+export async function scanForInterception(urgentOrderId: number): Promise<InterceptionPlan> {
+  return mockScanForInterception(urgentOrderId);
+}
+
+/**
+ * Confirms a route interception, redirecting the selected transit vehicle to
+ * serve the urgent order first.
+ */
+export async function confirmInterception(
+  planId: string,
+  urgentOrderId: number,
+  transitOrderId: number,
+): Promise<void> {
+  return mockConfirmInterception(planId, urgentOrderId, transitOrderId);
+}
+

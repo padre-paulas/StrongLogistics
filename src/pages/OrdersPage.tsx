@@ -4,11 +4,13 @@ import { fetchOrders } from '../api/orders';
 import { autoAssignOrders } from '../api/orders';
 import PriorityBadge from '../components/PriorityBadge';
 import StatusBadge from '../components/StatusBadge';
+import WeightBadge from '../components/WeightBadge';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import RoleGuard from '../components/RoleGuard';
 import OrderDetailDrawer from '../features/OrderDetailDrawer';
 import AutoAssignModal from '../features/AutoAssignModal';
 import CreateOrderModal from '../features/CreateOrderModal';
+import RouteInterceptionModal from '../features/RouteInterceptionModal';
 import type { Order, Priority, OrderStatus } from '../types';
 import { format } from 'date-fns';
 import { useToast } from '../context/ToastContext';
@@ -33,6 +35,7 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showAutoAssign, setShowAutoAssign] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [interceptionOrderId, setInterceptionOrderId] = useState<number | null>(null);
   const { addToast } = useToast();
 
   const { data, isLoading, error, refetch } = useQuery({
@@ -161,6 +164,7 @@ export default function OrdersPage() {
                   <th className="px-4 py-3 text-left cursor-pointer" onClick={() => toggleSort('priority')}>
                     Priority<SortIcon col="priority" sortKey={sortKey} sortDir={sortDir} />
                   </th>
+                  <th className="px-4 py-3 text-left">Weight</th>
                   <th className="px-4 py-3 text-left cursor-pointer" onClick={() => toggleSort('status')}>
                     Status<SortIcon col="status" sortKey={sortKey} sortDir={sortDir} />
                   </th>
@@ -173,7 +177,7 @@ export default function OrdersPage() {
               <tbody className="divide-y">
                 {filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="text-center py-8 text-gray-500">No orders found</td>
+                    <td colSpan={9} className="text-center py-8 text-gray-500">No orders found</td>
                   </tr>
                 ) : (
                   filteredOrders.map((order) => (
@@ -187,6 +191,9 @@ export default function OrdersPage() {
                       <td className="px-4 py-3 text-gray-600">{order.resource?.name}</td>
                       <td className="px-4 py-3 text-gray-600">{order.quantity} {order.resource?.unit}</td>
                       <td className="px-4 py-3"><PriorityBadge priority={order.priority} /></td>
+                      <td className="px-4 py-3">
+                        {order.weight !== undefined ? <WeightBadge weight={order.weight} /> : <span className="text-gray-400 text-xs">—</span>}
+                      </td>
                       <td className="px-4 py-3"><StatusBadge status={order.status} /></td>
                       <td className="px-4 py-3 text-gray-600">{order.driver?.full_name ?? '—'}</td>
                       <td className="px-4 py-3 text-gray-400 text-xs">{format(new Date(order.created_at), 'MMM d, HH:mm')}</td>
@@ -228,7 +235,20 @@ export default function OrdersPage() {
         />
       )}
       {showAutoAssign && <AutoAssignModal isOpen={showAutoAssign} onClose={() => setShowAutoAssign(false)} />}
-      {showCreate && <CreateOrderModal isOpen={showCreate} onClose={() => setShowCreate(false)} />}
+      {showCreate && (
+        <CreateOrderModal
+          isOpen={showCreate}
+          onClose={() => setShowCreate(false)}
+          onCriticalOrderCreated={(orderId) => setInterceptionOrderId(orderId)}
+        />
+      )}
+      {interceptionOrderId !== null && (
+        <RouteInterceptionModal
+          urgentOrderId={interceptionOrderId}
+          isOpen={true}
+          onClose={() => setInterceptionOrderId(null)}
+        />
+      )}
     </div>
   );
 }

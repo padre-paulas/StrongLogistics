@@ -4,6 +4,7 @@ import type { Order, OrderStatus } from '../types';
 import { updateOrderStatus } from '../api/orders';
 import PriorityBadge from '../components/PriorityBadge';
 import StatusBadge from '../components/StatusBadge';
+import WeightBadge from '../components/WeightBadge';
 import RoleGuard from '../components/RoleGuard';
 import { format } from 'date-fns';
 import { useToast } from '../context/ToastContext';
@@ -49,6 +50,16 @@ export default function OrderDetailDrawer({ order, onClose }: Props) {
               <StatusBadge status={order.status} />
             </div>
           </div>
+
+          {order.weight !== undefined && (
+            <div>
+              <p className="text-xs text-gray-500 uppercase mb-1">Urgency Weight</p>
+              <div className="flex items-center gap-2">
+                <WeightBadge weight={order.weight} />
+                <span className="text-xs text-gray-500">score out of 100 (priority × stock urgency)</span>
+              </div>
+            </div>
+          )}
 
           <div>
             <p className="text-xs text-gray-500 uppercase mb-1">Delivery Point</p>
