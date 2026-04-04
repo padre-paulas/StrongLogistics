@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
 interface LoginForm {
@@ -15,8 +15,7 @@ export default function LoginPage() {
   const { register, handleSubmit, formState: { isSubmitting, errors } } = useForm<LoginForm>();
 
   if (isAuthenticated) {
-    navigate('/dashboard', { replace: true });
-    return null;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const onSubmit = async (data: LoginForm) => {
@@ -66,6 +65,12 @@ export default function LoginPage() {
             {isSubmitting ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+        <p className="text-center text-sm text-gray-500 mt-6">
+          Don't have an account?{' '}
+          <Link to="/signup" className="text-blue-600 hover:underline font-medium">
+            Sign Up
+          </Link>
+        </p>
       </div>
     </div>
   );

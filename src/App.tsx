@@ -7,6 +7,7 @@ import PrivateRoute from './components/PrivateRoute';
 import RoleGuard from './components/RoleGuard';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
+import SignUpPage from './pages/SignUpPage';
 import DashboardPage from './pages/DashboardPage';
 import OrdersPage from './pages/OrdersPage';
 import MapPage from './pages/MapPage';
@@ -27,6 +28,7 @@ export default function App() {
             <BrowserRouter>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignUpPage />} />
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route
                   path="/dashboard"
