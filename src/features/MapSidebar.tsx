@@ -102,7 +102,7 @@ export default function MapSidebar({ point, resources, onClose, onCreateOrder }:
                     {nearbyPoints.map((np, i) => (
                       <div key={i} className="border rounded-lg p-2 text-xs">
                         <p className="font-medium">{np.point.name}</p>
-                        <p className="text-gray-500">{np.distance_km?.toFixed(1)} km away</p>
+                        <p className="text-gray-500">{np.distance_km != null ? `${np.distance_km.toFixed(1)} km away` : 'Distance unavailable'}</p>
                         <p className="text-green-600">Available: {np.available_quantity}</p>
                       </div>
                     ))}

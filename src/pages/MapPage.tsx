@@ -32,7 +32,8 @@ function createColoredIcon(color: string) {
   });
 }
 
-function getPointPriority(_point: DeliveryPoint): Priority {
+/** Returns the highest active order priority for a delivery point. Stub — will query active orders when integrated. */
+function getDefaultPointPriority(_point: DeliveryPoint): Priority {
   return 'normal';
 }
 
@@ -95,7 +96,7 @@ export default function MapPage() {
               <Marker
                 key={point.id}
                 position={[point.latitude, point.longitude]}
-                icon={createColoredIcon(getPriorityColor(getPointPriority(point)))}
+                icon={createColoredIcon(getPriorityColor(getDefaultPointPriority(point)))}
                 eventHandlers={{ click: () => setSelectedPoint(point) }}
               >
                 <Popup>{point.name}</Popup>

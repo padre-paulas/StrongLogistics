@@ -27,8 +27,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         try {
           const notification: Notification = JSON.parse(evt.data);
           setNotifications((prev) => [notification, ...prev].slice(0, 50));
-        } catch {
-          // ignore
+        } catch (err) {
+          if (import.meta.env.DEV) console.warn('[Notifications] Failed to parse WS message:', err);
         }
       };
 
