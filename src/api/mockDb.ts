@@ -192,6 +192,8 @@ export const orders: Order[] = [
 
 // ─── Helper: simulate async delay ────────────────────────────────────────────
 
+function delay<T>(value: T, ms?: number): Promise<T>;
+function delay(value: void, ms?: number): Promise<void>;
 function delay<T>(value: T, ms = 300): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(value), ms));
 }
@@ -299,7 +301,7 @@ export function mockConfirmAutoAssign(_planId: string): Promise<void> {
     order.updated_at = now;
     order.status_history.push({ status: 'dispatched', timestamp: now, changed_by: 'Auto-assign' });
   });
-  return delay(undefined as unknown as void, 500);
+  return delay(undefined as void, 500);
 }
 
 export function mockFetchPoints(): Promise<DeliveryPoint[]> {
@@ -340,19 +342,19 @@ export function mockFetchUsers(): Promise<User[]> {
 export function mockDeactivateUser(id: number): Promise<void> {
   const user = users.find((u) => u.id === id);
   if (user) user.is_active = false;
-  return delay(undefined as unknown as void);
+  return delay(undefined as void);
 }
 
 export function mockAdminDeleteResource(id: number): Promise<void> {
   const idx = resources.findIndex((r) => r.id === id);
   if (idx !== -1) resources.splice(idx, 1);
-  return delay(undefined as unknown as void);
+  return delay(undefined as void);
 }
 
 export function mockAdminDeletePoint(id: number): Promise<void> {
   const idx = deliveryPoints.findIndex((p) => p.id === id);
   if (idx !== -1) deliveryPoints.splice(idx, 1);
-  return delay(undefined as unknown as void);
+  return delay(undefined as void);
 }
 
 export function mockFetchRouteInfo(_pointId: number): Promise<RouteInfo> {
