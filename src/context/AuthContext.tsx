@@ -1,16 +1,22 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { User, Role } from '../types';
-import apiClient from '../api/client';
 
 interface AuthContextType {
   user: User | null;
   role: Role | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, role: Role) => Promise<void>;
+  signup: (email: string, fullName: string, role: Role) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
+
+let mockIdCounter = 1;
+
+function createMockUser(email: string, fullName: string, role: Role): User {
+  return { id: mockIdCounter++, email, full_name: fullName, role, is_active: true };
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -26,23 +32,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const { data } = await apiClient.post('/api/auth/login/', { email, password });
-    localStorage.setItem('access_token', data.access);
-    localStorage.setItem('refresh_token', data.refresh);
-    localStorage.setItem('user', JSON.stringify(data.user));
-    setUser(data.user);
+  const login = useCallback(async (email: string, role: Role) => {
+    const mockUser = createMockUser(email, email.split('@')[0], role);
+    localStorage.setItem('user', JSON.stringify(mockUser));
+    setUser(mockUser);
+  }, []);
+
+  const signup = useCallback(async (email: string, fullName: string, role: Role) => {
+    const mockUser = createMockUser(email, fullName, role);
+    localStorage.setItem('user', JSON.stringify(mockUser));
+    setUser(mockUser);
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
     setUser(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, role: user?.role ?? null, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, role: user?.role ?? null, login, signup, logout, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,19 +1,23 @@
-import apiClient from './client';
+import {
+  mockFetchOrders,
+  mockFetchOrder,
+  mockUpdateOrderStatus,
+  mockCreateOrder,
+  mockAutoAssignOrders,
+  mockConfirmAutoAssign,
+} from './mockDb';
 import type { Order, PaginatedResponse, AutoAssignPlan } from '../types';
 
 export async function fetchOrders(params?: Record<string, string | number>): Promise<PaginatedResponse<Order>> {
-  const { data } = await apiClient.get<PaginatedResponse<Order>>('/api/orders/', { params });
-  return data;
+  return mockFetchOrders(params);
 }
 
 export async function fetchOrder(id: number): Promise<Order> {
-  const { data } = await apiClient.get<Order>(`/api/orders/${id}/`);
-  return data;
+  return mockFetchOrder(id);
 }
 
 export async function updateOrderStatus(id: number, status: string): Promise<Order> {
-  const { data } = await apiClient.patch<Order>(`/api/orders/${id}/`, { status });
-  return data;
+  return mockUpdateOrderStatus(id, status);
 }
 
 export async function createOrder(payload: {
@@ -23,15 +27,13 @@ export async function createOrder(payload: {
   priority: string;
   notes?: string;
 }): Promise<Order> {
-  const { data } = await apiClient.post<Order>('/api/orders/', payload);
-  return data;
+  return mockCreateOrder(payload);
 }
 
 export async function autoAssignOrders(): Promise<AutoAssignPlan> {
-  const { data } = await apiClient.post<AutoAssignPlan>('/api/orders/auto-assign/');
-  return data;
+  return mockAutoAssignOrders();
 }
 
 export async function confirmAutoAssign(planId: string): Promise<void> {
-  await apiClient.post('/api/orders/auto-assign/confirm/', { plan_id: planId });
+  return mockConfirmAutoAssign(planId);
 }

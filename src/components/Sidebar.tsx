@@ -11,7 +11,7 @@ export default function Sidebar() {
   return (
     <aside className="w-64 bg-gray-900 text-white flex flex-col min-h-screen shrink-0">
       <div className="p-6 border-b border-gray-700">
-        <h1 className="text-xl font-bold text-white">🚚 LogiFlow</h1>
+        <h1 className="text-xl font-bold text-white">🚚 StrongLogistics</h1>
         <p className="text-gray-400 text-xs mt-1">Logistics Dashboard</p>
       </div>
       <nav className="flex-1 p-4 space-y-1">

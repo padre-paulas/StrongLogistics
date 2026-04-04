@@ -16,6 +16,11 @@ import { useToast } from '../context/ToastContext';
 type SortKey = 'order_id' | 'priority' | 'status' | 'created_at';
 type SortDir = 'asc' | 'desc';
 
+function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; sortDir: SortDir }) {
+  if (sortKey !== col) return <> ↕</>;
+  return <>{sortDir === 'asc' ? ' ↑' : ' ↓'}</>;
+}
+
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -69,9 +74,6 @@ export default function OrdersPage() {
       addToast('Failed to start auto-assign', 'error');
     }
   };
-
-  const SortIcon = ({ col }: { col: SortKey }) =>
-    sortKey === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ' ↕';
 
   if (error) {
     return (
@@ -151,20 +153,20 @@ export default function OrdersPage() {
               <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
                 <tr>
                   <th className="px-4 py-3 text-left cursor-pointer" onClick={() => toggleSort('order_id')}>
-                    Order ID<SortIcon col="order_id" />
+                    Order ID<SortIcon col="order_id" sortKey={sortKey} sortDir={sortDir} />
                   </th>
                   <th className="px-4 py-3 text-left">Destination</th>
                   <th className="px-4 py-3 text-left">Resource</th>
                   <th className="px-4 py-3 text-left">Qty</th>
                   <th className="px-4 py-3 text-left cursor-pointer" onClick={() => toggleSort('priority')}>
-                    Priority<SortIcon col="priority" />
+                    Priority<SortIcon col="priority" sortKey={sortKey} sortDir={sortDir} />
                   </th>
                   <th className="px-4 py-3 text-left cursor-pointer" onClick={() => toggleSort('status')}>
-                    Status<SortIcon col="status" />
+                    Status<SortIcon col="status" sortKey={sortKey} sortDir={sortDir} />
                   </th>
                   <th className="px-4 py-3 text-left">Driver</th>
                   <th className="px-4 py-3 text-left cursor-pointer" onClick={() => toggleSort('created_at')}>
-                    Created<SortIcon col="created_at" />
+                    Created<SortIcon col="created_at" sortKey={sortKey} sortDir={sortDir} />
                   </th>
                 </tr>
               </thead>

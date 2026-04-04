@@ -13,7 +13,7 @@ const pageTitles: Record<string, string> = {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const title = pageTitles[location.pathname] || 'LogiFlow';
+  const title = pageTitles[location.pathname] || 'StrongLogistics';
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">

@@ -1,0 +1,365 @@
+/**
+ * Mock in-memory database.
+ * Replaces all backend API calls until the real backend is integrated.
+ */
+
+import type {
+  User,
+  Resource,
+  DeliveryPoint,
+  Order,
+  Driver,
+  AutoAssignPlan,
+  DashboardStats,
+  PaginatedResponse,
+  RouteInfo,
+  NearbyPoint,
+} from '../types';
+
+// ─── Static lookup data ───────────────────────────────────────────────────────
+
+export const resources: Resource[] = [
+  { id: 1, name: 'Fuel', unit: 'litres', description: 'Diesel fuel for vehicles' },
+  { id: 2, name: 'Water', unit: 'litres', description: 'Potable water supply' },
+  { id: 3, name: 'Medical Supplies', unit: 'kits', description: 'First-aid and emergency kits' },
+  { id: 4, name: 'Food Rations', unit: 'boxes', description: 'Standard food ration boxes' },
+  { id: 5, name: 'Spare Parts', unit: 'units', description: 'Vehicle spare parts and tools' },
+];
+
+export const deliveryPoints: DeliveryPoint[] = [
+  {
+    id: 1, name: 'Lisbon Depot', address: 'Av. da Liberdade 110, Lisbon',
+    latitude: 38.7169, longitude: -9.1399,
+    stock: [
+      { resource_id: 1, resource_name: 'Fuel', quantity: 2000 },
+      { resource_id: 2, resource_name: 'Water', quantity: 500 },
+    ],
+  },
+  {
+    id: 2, name: 'Porto Hub', address: 'Rua de Santa Catarina 20, Porto',
+    latitude: 41.1496, longitude: -8.6110,
+    stock: [
+      { resource_id: 3, resource_name: 'Medical Supplies', quantity: 80 },
+      { resource_id: 4, resource_name: 'Food Rations', quantity: 300 },
+    ],
+  },
+  {
+    id: 3, name: 'Faro Station', address: 'Rua de Santo António 15, Faro',
+    latitude: 37.0194, longitude: -7.9304,
+    stock: [
+      { resource_id: 1, resource_name: 'Fuel', quantity: 800 },
+      { resource_id: 5, resource_name: 'Spare Parts', quantity: 40 },
+    ],
+  },
+  {
+    id: 4, name: 'Coimbra Point', address: 'Rua Ferreira Borges 50, Coimbra',
+    latitude: 40.2033, longitude: -8.4103,
+    stock: [
+      { resource_id: 2, resource_name: 'Water', quantity: 1200 },
+      { resource_id: 4, resource_name: 'Food Rations', quantity: 150 },
+    ],
+  },
+  {
+    id: 5, name: 'Braga Warehouse', address: 'Av. da Liberdade 5, Braga',
+    latitude: 41.5454, longitude: -8.4265,
+    stock: [
+      { resource_id: 1, resource_name: 'Fuel', quantity: 600 },
+      { resource_id: 3, resource_name: 'Medical Supplies', quantity: 30 },
+    ],
+  },
+  {
+    id: 6, name: 'Évora Centre', address: 'Praça do Giraldo, Évora',
+    latitude: 38.5714, longitude: -7.9130,
+    stock: [
+      { resource_id: 4, resource_name: 'Food Rations', quantity: 250 },
+    ],
+  },
+];
+
+export const users: User[] = [
+  { id: 1, email: 'admin@stronglogistics.com', full_name: 'Admin User', role: 'admin', is_active: true },
+  { id: 2, email: 'dispatcher@stronglogistics.com', full_name: 'Maria Costa', role: 'dispatcher', is_active: true },
+  { id: 3, email: 'driver1@stronglogistics.com', full_name: 'João Silva', role: 'driver', is_active: true },
+  { id: 4, email: 'driver2@stronglogistics.com', full_name: 'Ana Pereira', role: 'driver', is_active: true },
+  { id: 5, email: 'driver3@stronglogistics.com', full_name: 'Carlos Santos', role: 'driver', is_active: false },
+];
+
+const drivers: Driver[] = [
+  { id: 3, full_name: 'João Silva', email: 'driver1@stronglogistics.com', is_available: true, vehicle_plate: '34-AB-56' },
+  { id: 4, full_name: 'Ana Pereira', email: 'driver2@stronglogistics.com', is_available: true, vehicle_plate: '78-CD-90' },
+];
+
+// ─── Mutable orders store ─────────────────────────────────────────────────────
+
+let _nextOrderSeq = 9;
+
+function makeOrderId(): string {
+  return `ORD-${String(_nextOrderSeq++).padStart(4, '0')}`;
+}
+
+export const orders: Order[] = [
+  {
+    id: 1, order_id: 'ORD-0001',
+    delivery_point: deliveryPoints[1], resource: resources[0], quantity: 500,
+    priority: 'critical', status: 'pending',
+    driver: undefined,
+    created_at: '2026-04-01T08:00:00Z', updated_at: '2026-04-01T08:00:00Z',
+    status_history: [
+      { status: 'pending', timestamp: '2026-04-01T08:00:00Z', changed_by: 'Admin User' },
+    ],
+  },
+  {
+    id: 2, order_id: 'ORD-0002',
+    delivery_point: deliveryPoints[2], resource: resources[1], quantity: 200,
+    priority: 'elevated', status: 'dispatched',
+    driver: drivers[0],
+    created_at: '2026-04-01T09:30:00Z', updated_at: '2026-04-01T10:00:00Z',
+    status_history: [
+      { status: 'pending', timestamp: '2026-04-01T09:30:00Z', changed_by: 'Maria Costa' },
+      { status: 'dispatched', timestamp: '2026-04-01T10:00:00Z', changed_by: 'Maria Costa' },
+    ],
+  },
+  {
+    id: 3, order_id: 'ORD-0003',
+    delivery_point: deliveryPoints[0], resource: resources[2], quantity: 30,
+    priority: 'normal', status: 'in_transit',
+    driver: drivers[1],
+    created_at: '2026-04-02T07:15:00Z', updated_at: '2026-04-02T08:00:00Z',
+    status_history: [
+      { status: 'pending', timestamp: '2026-04-02T07:15:00Z', changed_by: 'Admin User' },
+      { status: 'dispatched', timestamp: '2026-04-02T07:45:00Z', changed_by: 'Maria Costa' },
+      { status: 'in_transit', timestamp: '2026-04-02T08:00:00Z', changed_by: 'João Silva' },
+    ],
+  },
+  {
+    id: 4, order_id: 'ORD-0004',
+    delivery_point: deliveryPoints[3], resource: resources[3], quantity: 100,
+    priority: 'normal', status: 'delivered',
+    driver: drivers[0],
+    created_at: '2026-04-02T11:00:00Z', updated_at: '2026-04-02T15:30:00Z',
+    status_history: [
+      { status: 'pending', timestamp: '2026-04-02T11:00:00Z', changed_by: 'Maria Costa' },
+      { status: 'dispatched', timestamp: '2026-04-02T11:30:00Z', changed_by: 'Maria Costa' },
+      { status: 'in_transit', timestamp: '2026-04-02T12:00:00Z', changed_by: 'João Silva' },
+      { status: 'delivered', timestamp: '2026-04-02T15:30:00Z', changed_by: 'João Silva' },
+    ],
+  },
+  {
+    id: 5, order_id: 'ORD-0005',
+    delivery_point: deliveryPoints[4], resource: resources[0], quantity: 400,
+    priority: 'critical', status: 'pending',
+    driver: undefined,
+    created_at: '2026-04-03T06:00:00Z', updated_at: '2026-04-03T06:00:00Z',
+    status_history: [
+      { status: 'pending', timestamp: '2026-04-03T06:00:00Z', changed_by: 'Admin User' },
+    ],
+  },
+  {
+    id: 6, order_id: 'ORD-0006',
+    delivery_point: deliveryPoints[5], resource: resources[4], quantity: 15,
+    priority: 'elevated', status: 'dispatched',
+    driver: drivers[1],
+    notes: 'Urgent — vehicle breakdown on-site',
+    created_at: '2026-04-03T09:00:00Z', updated_at: '2026-04-03T09:45:00Z',
+    status_history: [
+      { status: 'pending', timestamp: '2026-04-03T09:00:00Z', changed_by: 'Maria Costa' },
+      { status: 'dispatched', timestamp: '2026-04-03T09:45:00Z', changed_by: 'Maria Costa' },
+    ],
+  },
+  {
+    id: 7, order_id: 'ORD-0007',
+    delivery_point: deliveryPoints[2], resource: resources[3], quantity: 60,
+    priority: 'normal', status: 'cancelled',
+    driver: undefined,
+    notes: 'Cancelled by client',
+    created_at: '2026-04-03T14:00:00Z', updated_at: '2026-04-03T14:30:00Z',
+    status_history: [
+      { status: 'pending', timestamp: '2026-04-03T14:00:00Z', changed_by: 'Maria Costa' },
+      { status: 'cancelled', timestamp: '2026-04-03T14:30:00Z', changed_by: 'Maria Costa' },
+    ],
+  },
+  {
+    id: 8, order_id: 'ORD-0008',
+    delivery_point: deliveryPoints[1], resource: resources[2], quantity: 20,
+    priority: 'critical', status: 'pending',
+    driver: undefined,
+    created_at: '2026-04-04T07:00:00Z', updated_at: '2026-04-04T07:00:00Z',
+    status_history: [
+      { status: 'pending', timestamp: '2026-04-04T07:00:00Z', changed_by: 'Admin User' },
+    ],
+  },
+];
+
+// ─── Helper: simulate async delay ────────────────────────────────────────────
+
+function delay<T>(value: T, ms?: number): Promise<T>;
+function delay(value: void, ms?: number): Promise<void>;
+function delay<T>(value: T, ms = 300): Promise<T> {
+  return new Promise((resolve) => setTimeout(() => resolve(value), ms));
+}
+
+// ─── API implementations ──────────────────────────────────────────────────────
+
+export function mockFetchDashboardStats(): Promise<DashboardStats> {
+  const activeOrders = orders.filter((o) => !['delivered', 'cancelled'].includes(o.status));
+  const stats: DashboardStats = {
+    total_active_orders: activeOrders.length,
+    critical_priority: orders.filter((o) => o.priority === 'critical' && o.status === 'pending').length,
+    pending_dispatch: orders.filter((o) => o.status === 'pending').length,
+    available_drivers: drivers.filter((d) => d.is_available).length,
+    recent_orders: [...orders].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 5),
+  };
+  return delay(stats);
+}
+
+export function mockFetchOrders(params?: Record<string, string | number>): Promise<PaginatedResponse<Order>> {
+  let results = [...orders];
+  if (params?.status) results = results.filter((o) => o.status === params.status);
+  if (params?.priority) results = results.filter((o) => o.priority === params.priority);
+  results.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  return delay({ count: results.length, next: null, previous: null, results });
+}
+
+export function mockFetchOrder(id: number): Promise<Order> {
+  const order = orders.find((o) => o.id === id);
+  if (!order) return Promise.reject(new Error('Order not found'));
+  return delay(order);
+}
+
+export function mockUpdateOrderStatus(id: number, status: string): Promise<Order> {
+  const order = orders.find((o) => o.id === id);
+  if (!order) return Promise.reject(new Error('Order not found'));
+  order.status = status as Order['status'];
+  order.updated_at = new Date().toISOString();
+  order.status_history.push({
+    status: status as Order['status'],
+    timestamp: new Date().toISOString(),
+    changed_by: 'Current User',
+  });
+  return delay({ ...order });
+}
+
+let _nextId = orders.length + 1;
+
+export function mockCreateOrder(payload: {
+  delivery_point: number;
+  resource: number;
+  quantity: number;
+  priority: string;
+  notes?: string;
+}): Promise<Order> {
+  const point = deliveryPoints.find((p) => p.id === payload.delivery_point);
+  const resource = resources.find((r) => r.id === payload.resource);
+  if (!point || !resource) return Promise.reject(new Error('Invalid delivery point or resource'));
+  const now = new Date().toISOString();
+  const newOrder: Order = {
+    id: _nextId++,
+    order_id: makeOrderId(),
+    delivery_point: point,
+    resource,
+    quantity: payload.quantity,
+    priority: payload.priority as Order['priority'],
+    status: 'pending',
+    driver: undefined,
+    notes: payload.notes,
+    created_at: now,
+    updated_at: now,
+    status_history: [{ status: 'pending', timestamp: now, changed_by: 'Current User' }],
+  };
+  orders.unshift(newOrder);
+  return delay({ ...newOrder });
+}
+
+let _planIdCounter = 1;
+
+export function mockAutoAssignOrders(): Promise<AutoAssignPlan> {
+  const pending = orders.filter((o) => o.status === 'pending');
+  const assignments = drivers.map((driver, i) => {
+    const slice = pending.filter((_, idx) => idx % drivers.length === i);
+    return {
+      driver,
+      orders: slice,
+      total_distance_km: Math.round(50 + Math.random() * 100),
+      estimated_time_minutes: Math.round(60 + Math.random() * 120),
+    };
+  });
+  const plan: AutoAssignPlan = {
+    plan_id: `plan-${_planIdCounter++}`,
+    assignments,
+    total_distance_km: assignments.reduce((s, a) => s + a.total_distance_km, 0),
+    estimated_time_minutes: Math.max(...assignments.map((a) => a.estimated_time_minutes)),
+  };
+  return delay(plan, 800);
+}
+
+export function mockConfirmAutoAssign(_planId: string): Promise<void> {
+  const pending = orders.filter((o) => o.status === 'pending');
+  pending.forEach((order, i) => {
+    order.status = 'dispatched';
+    order.driver = drivers[i % drivers.length];
+    const now = new Date().toISOString();
+    order.updated_at = now;
+    order.status_history.push({ status: 'dispatched', timestamp: now, changed_by: 'Auto-assign' });
+  });
+  return delay(undefined as void, 500);
+}
+
+export function mockFetchPoints(): Promise<DeliveryPoint[]> {
+  return delay([...deliveryPoints]);
+}
+
+export function mockFetchPointOrders(pointId: number): Promise<Order[]> {
+  const result = orders.filter(
+    (o) => o.delivery_point.id === pointId && !['delivered', 'cancelled'].includes(o.status)
+  );
+  return delay(result);
+}
+
+export function mockFetchNearbyPoints(pointId: number, resourceId: number): Promise<NearbyPoint[]> {
+  const origin = deliveryPoints.find((p) => p.id === pointId);
+  if (!origin) return delay([]);
+  const nearby: NearbyPoint[] = deliveryPoints
+    .filter((p) => p.id !== pointId && p.stock.some((s) => s.resource_id === resourceId))
+    .map((p) => {
+      const latDiff = p.latitude - origin.latitude;
+      const lngDiff = p.longitude - origin.longitude;
+      const distance_km = Math.round(Math.sqrt(latDiff * latDiff + lngDiff * lngDiff) * 111);
+      const stock = p.stock.find((s) => s.resource_id === resourceId);
+      return { point: p, distance_km, available_quantity: stock?.quantity ?? 0 };
+    })
+    .sort((a, b) => a.distance_km - b.distance_km);
+  return delay(nearby);
+}
+
+export function mockFetchResources(): Promise<Resource[]> {
+  return delay([...resources]);
+}
+
+export function mockFetchUsers(): Promise<User[]> {
+  return delay([...users]);
+}
+
+export function mockDeactivateUser(id: number): Promise<void> {
+  const user = users.find((u) => u.id === id);
+  if (user) user.is_active = false;
+  return delay(undefined as void);
+}
+
+export function mockAdminDeleteResource(id: number): Promise<void> {
+  const idx = resources.findIndex((r) => r.id === id);
+  if (idx !== -1) resources.splice(idx, 1);
+  return delay(undefined as void);
+}
+
+export function mockAdminDeletePoint(id: number): Promise<void> {
+  const idx = deliveryPoints.findIndex((p) => p.id === id);
+  if (idx !== -1) deliveryPoints.splice(idx, 1);
+  return delay(undefined as void);
+}
+
+export function mockFetchRouteInfo(_pointId: number): Promise<RouteInfo> {
+  return delay({
+    distance_km: Math.round(50 + Math.random() * 200),
+    estimated_time_minutes: Math.round(45 + Math.random() * 180),
+  });
+}

@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createOrder } from '../api/orders';
 import { fetchPoints } from '../api/points';
 import { fetchResources } from '../api/resources';
-import apiClient from '../api/client';
+import { mockFetchRouteInfo } from '../api/mockDb';
 import type { Priority, RouteInfo } from '../types';
 import { useToast } from '../context/ToastContext';
 
@@ -42,8 +42,8 @@ export default function CreateOrderModal({ isOpen, onClose, initialPointId }: Pr
 
   useEffect(() => {
     if (selectedPointId) {
-      apiClient.get<RouteInfo>(`/api/route/?from=depot&stops=${selectedPointId}`)
-        .then(({ data }) => setRouteInfo(data))
+      mockFetchRouteInfo(Number(selectedPointId))
+        .then((data) => setRouteInfo(data))
         .catch(() => setRouteInfo(null));
     }
   }, [selectedPointId]);
