@@ -5,6 +5,7 @@ import type { DeliveryPoint, Resource } from '../types';
 import StatusBadge from '../components/StatusBadge';
 import PriorityBadge from '../components/PriorityBadge';
 import LoadingSkeleton from '../components/LoadingSkeleton';
+import { useAuth } from '../context/AuthContext';
 
 interface Props {
   point: DeliveryPoint;
@@ -16,6 +17,8 @@ interface Props {
 export default function MapSidebar({ point, resources, onClose, onCreateOrder }: Props) {
   const [selectedResourceId, setSelectedResourceId] = useState<number | null>(null);
   const [showNearby, setShowNearby] = useState(false);
+  const { role } = useAuth();
+  const canCreateOrder = role === 'admin' || role === 'dispatcher';
 
   const { data: orders, isLoading: loadingOrders } = useQuery({
     queryKey: ['pointOrders', point.id],
@@ -115,12 +118,14 @@ export default function MapSidebar({ point, resources, onClose, onCreateOrder }:
       </div>
 
       <div className="p-4 border-t space-y-2">
-        <button
-          onClick={() => onCreateOrder(point.id)}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium"
-        >
-          + Create Order
-        </button>
+        {canCreateOrder && (
+          <button
+            onClick={() => onCreateOrder(point.id)}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium"
+          >
+            + Create Order
+          </button>
+        )}
         <button
           onClick={() => setShowNearby((v) => !v)}
           className="w-full border border-gray-300 text-gray-700 py-2 rounded-lg text-sm hover:bg-gray-50"

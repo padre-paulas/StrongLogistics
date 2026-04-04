@@ -152,3 +152,17 @@ export interface InterceptionPlan {
   candidates: InterceptionCandidate[];
   algorithm: 'ALNS' | 'ACO';
 }
+
+/**
+ * Demand level set by an admin for a specific resource at a delivery point.
+ * Drives automatic route reassignment when changed.
+ */
+export type DemandLevel = 'low' | 'normal' | 'high' | 'surge';
+
+export interface DemandSetting {
+  id: string;
+  point_id: number;
+  resource_id: number;
+  level: DemandLevel;
+  updated_at: string;
+}

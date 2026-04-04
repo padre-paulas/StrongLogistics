@@ -17,6 +17,8 @@ import type {
   RouteBlockage,
   InterceptionCandidate,
   InterceptionPlan,
+  DemandLevel,
+  DemandSetting,
 } from '../types';
 import {
   calculateOrderWeight,
@@ -201,6 +203,10 @@ export const orders: Order[] = [
 
 export let blockedRoutes: RouteBlockage[] = [];
 
+// ─── Admin-set demand settings ────────────────────────────────────────────────
+
+export let demandSettings: DemandSetting[] = [];
+
 // ─── Helper: simulate async delay ────────────────────────────────────────────
 
 function delay<T>(value: T, ms?: number): Promise<T>;
@@ -217,7 +223,10 @@ function withWeight(order: Order): Order {
     order.delivery_point.stock,
     order.resource.id,
   );
-  return { ...order, weight: calculateOrderWeight(order.priority, stockPct) };
+  const demandSetting = demandSettings.find(
+    (d) => d.point_id === order.delivery_point.id && d.resource_id === order.resource.id,
+  );
+  return { ...order, weight: calculateOrderWeight(order.priority, stockPct, demandSetting?.level) };
 }
 
 // ─── API implementations ──────────────────────────────────────────────────────
@@ -380,6 +389,23 @@ export function mockAdminDeleteResource(id: number): Promise<void> {
   return delay(undefined as void);
 }
 
+let _resourceIdCounter = Math.max(...resources.map((r) => r.id)) + 1;
+
+export function mockAdminCreateResource(payload: {
+  name: string;
+  unit: string;
+  description?: string;
+}): Promise<Resource> {
+  const newResource: Resource = {
+    id: _resourceIdCounter++,
+    name: payload.name,
+    unit: payload.unit,
+    description: payload.description,
+  };
+  resources.push(newResource);
+  return delay({ ...newResource });
+}
+
 export function mockAdminDeletePoint(id: number): Promise<void> {
   const idx = deliveryPoints.findIndex((p) => p.id === id);
   if (idx !== -1) deliveryPoints.splice(idx, 1);
@@ -515,4 +541,62 @@ export function mockConfirmInterception(
   });
 
   return delay(undefined as void, 300);
+}
+
+// ─── Demand settings (admin-controlled) ──────────────────────────────────────
+
+let _demandIdCounter = 1;
+
+export function mockGetDemandSettings(): Promise<DemandSetting[]> {
+  return delay([...demandSettings]);
+}
+
+/**
+ * Sets the demand level for a resource at a delivery point.
+ * After updating the demand, all pending orders are automatically re-assigned
+ * to drivers in priority order (highest urgency weight first), so that
+ * increases or decreases in demand are immediately reflected in routing.
+ */
+export function mockSetDemand(
+  pointId: number,
+  resourceId: number,
+  level: DemandLevel,
+): Promise<{ demand: DemandSetting; reassignedCount: number }> {
+  const now = new Date().toISOString();
+  const existing = demandSettings.find(
+    (d) => d.point_id === pointId && d.resource_id === resourceId,
+  );
+  let demand: DemandSetting;
+  if (existing) {
+    existing.level = level;
+    existing.updated_at = now;
+    demand = { ...existing };
+  } else {
+    demand = {
+      id: `demand-${_demandIdCounter++}`,
+      point_id: pointId,
+      resource_id: resourceId,
+      level,
+      updated_at: now,
+    };
+    demandSettings.push(demand);
+  }
+
+  // Re-assign all pending orders, sorted by updated urgency weights
+  // (which now incorporate the new demand level).
+  const pending = [...orders.filter((o) => o.status === 'pending')].sort(
+    (a, b) => (withWeight(b).weight ?? 0) - (withWeight(a).weight ?? 0),
+  );
+  pending.forEach((order, i) => {
+    order.status = 'dispatched';
+    order.driver = drivers[i % drivers.length];
+    order.updated_at = now;
+    order.status_history.push({
+      status: 'dispatched',
+      timestamp: now,
+      changed_by: 'Auto-reassign (demand change)',
+    });
+  });
+
+  return delay({ demand, reassignedCount: pending.length }, 600);
 }
