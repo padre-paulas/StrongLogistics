@@ -1,54 +1,53 @@
-import apiClient from './client';
+import {
+  mockFetchUsers,
+  mockDeactivateUser,
+  mockFetchResources,
+  mockAdminDeleteResource,
+  mockFetchPoints,
+  mockAdminDeletePoint,
+} from './mockDb';
 import type { User, Resource, DeliveryPoint } from '../types';
 
 export async function fetchUsers(): Promise<User[]> {
-  const { data } = await apiClient.get<User[]>('/api/admin/users/');
-  return data;
+  return mockFetchUsers();
 }
 
-export async function createUser(payload: Partial<User> & { password?: string }): Promise<User> {
-  const { data } = await apiClient.post<User>('/api/admin/users/', payload);
-  return data;
+export async function createUser(_payload: Partial<User> & { password?: string }): Promise<User> {
+  throw new Error('Not implemented in mock');
 }
 
-export async function updateUser(id: number, payload: Partial<User>): Promise<User> {
-  const { data } = await apiClient.patch<User>(`/api/admin/users/${id}/`, payload);
-  return data;
+export async function updateUser(_id: number, _payload: Partial<User>): Promise<User> {
+  throw new Error('Not implemented in mock');
 }
 
 export async function deactivateUser(id: number): Promise<void> {
-  await apiClient.patch(`/api/admin/users/${id}/`, { is_active: false });
+  return mockDeactivateUser(id);
 }
 
 export async function adminFetchResources(): Promise<Resource[]> {
-  const { data } = await apiClient.get<Resource[]>('/api/resources/');
-  return data;
+  return mockFetchResources();
 }
 
-export async function adminCreateResource(payload: Partial<Resource>): Promise<Resource> {
-  const { data } = await apiClient.post<Resource>('/api/resources/', payload);
-  return data;
+export async function adminCreateResource(_payload: Partial<Resource>): Promise<Resource> {
+  throw new Error('Not implemented in mock');
 }
 
 export async function adminDeleteResource(id: number): Promise<void> {
-  await apiClient.delete(`/api/resources/${id}/`);
+  return mockAdminDeleteResource(id);
 }
 
 export async function adminFetchPoints(): Promise<DeliveryPoint[]> {
-  const { data } = await apiClient.get<DeliveryPoint[]>('/api/points/');
-  return data;
+  return mockFetchPoints();
 }
 
-export async function adminCreatePoint(payload: Partial<DeliveryPoint>): Promise<DeliveryPoint> {
-  const { data } = await apiClient.post<DeliveryPoint>('/api/points/', payload);
-  return data;
+export async function adminCreatePoint(_payload: Partial<DeliveryPoint>): Promise<DeliveryPoint> {
+  throw new Error('Not implemented in mock');
 }
 
-export async function adminUpdatePoint(id: number, payload: Partial<DeliveryPoint>): Promise<DeliveryPoint> {
-  const { data } = await apiClient.patch<DeliveryPoint>(`/api/points/${id}/`, payload);
-  return data;
+export async function adminUpdatePoint(_id: number, _payload: Partial<DeliveryPoint>): Promise<DeliveryPoint> {
+  throw new Error('Not implemented in mock');
 }
 
 export async function adminDeletePoint(id: number): Promise<void> {
-  await apiClient.delete(`/api/points/${id}/`);
+  return mockAdminDeletePoint(id);
 }

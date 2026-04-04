@@ -1,19 +1,18 @@
-import apiClient from './client';
+import {
+  mockFetchPoints,
+  mockFetchPointOrders,
+  mockFetchNearbyPoints,
+} from './mockDb';
 import type { DeliveryPoint, Order, NearbyPoint } from '../types';
 
 export async function fetchPoints(): Promise<DeliveryPoint[]> {
-  const { data } = await apiClient.get<DeliveryPoint[]>('/api/points/');
-  return data;
+  return mockFetchPoints();
 }
 
 export async function fetchPointOrders(pointId: number): Promise<Order[]> {
-  const { data } = await apiClient.get<Order[]>(`/api/points/${pointId}/orders/`);
-  return data;
+  return mockFetchPointOrders(pointId);
 }
 
-export async function fetchNearbyPoints(pointId: number, resourceId: number, radiusKm = 50): Promise<NearbyPoint[]> {
-  const { data } = await apiClient.get<NearbyPoint[]>('/api/points/nearby/', {
-    params: { point_id: pointId, resource_id: resourceId, radius_km: radiusKm },
-  });
-  return data;
+export async function fetchNearbyPoints(pointId: number, resourceId: number, _radiusKm = 50): Promise<NearbyPoint[]> {
+  return mockFetchNearbyPoints(pointId, resourceId);
 }
