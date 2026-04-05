@@ -18,7 +18,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       {/* Mobile backdrop overlay */}
       {open && (
         <div
-          className="fixed inset-0 z-20 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-[1040] bg-black/50 lg:hidden"
           onClick={onClose}
           aria-hidden="true"
         />
@@ -26,7 +26,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
       {/* Sidebar panel */}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 w-64 bg-gray-900 text-white flex flex-col transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:z-auto shrink-0 ${
+        className={`fixed inset-y-0 left-0 z-[1050] w-64 bg-gray-900 text-white flex flex-col transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:z-auto shrink-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
         aria-label="Main navigation"

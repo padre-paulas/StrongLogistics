@@ -120,7 +120,7 @@ export default function MapPage() {
 
   return (
     <div className="flex flex-col sm:flex-row h-full gap-3 sm:gap-4" style={{ minHeight: 'calc(100vh - 10rem)' }}>
-      <div className="flex-1 relative rounded-xl overflow-hidden shadow-sm" style={{ minHeight: '300px' }}>
+      <div className="flex-1 relative rounded-xl overflow-hidden shadow-sm isolate" style={{ minHeight: '300px' }}>
         {isLoading && (
           <div className="absolute inset-0 bg-white/80 z-[1000] flex items-center justify-center">
             <div className="text-gray-500">Loading map...</div>
