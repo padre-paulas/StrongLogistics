@@ -66,9 +66,9 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-2">
           <RoleGuard allowedRoles={['admin', 'dispatcher']}>
             <button
               onClick={handleAutoAssign}
@@ -106,12 +106,12 @@ export default function DashboardPage() {
         ) : (
           <div className="divide-y">
             {data.recent_orders.slice(0, 5).map((order) => (
-              <div key={order.id} className="px-6 py-4 flex items-center justify-between">
+              <div key={order.id} className="px-4 sm:px-6 py-4 flex flex-wrap items-center gap-3 justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-800">#{order.order_id}</p>
                   <p className="text-xs text-gray-500">{order.delivery_point?.name}</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2">
                   <PriorityBadge priority={order.priority} />
                   <StatusBadge status={order.status} />
                   <span className="text-xs text-gray-400">

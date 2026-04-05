@@ -21,7 +21,7 @@ export default function NotificationBell() {
         )}
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border z-50">
+        <div className="fixed inset-x-2 top-16 sm:absolute sm:inset-x-auto sm:right-0 mt-2 sm:w-80 bg-white rounded-xl shadow-xl border z-50">
           <div className="p-3 border-b font-semibold text-sm text-gray-700">Notifications</div>
           {notifications.length === 0 ? (
             <div className="p-4 text-center text-gray-500 text-sm">No notifications</div>

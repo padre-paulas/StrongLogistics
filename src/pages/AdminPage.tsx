@@ -106,12 +106,12 @@ export default function AdminPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Admin Panel</h1>
-      <div className="flex gap-2 border-b">
+      <div className="flex gap-1 border-b overflow-x-auto -mb-px">
         {(['users', 'resources', 'points', 'demand'] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-2 text-sm font-medium capitalize border-b-2 transition-colors ${
+            className={`px-4 py-2.5 text-sm font-medium capitalize border-b-2 transition-colors whitespace-nowrap ${
               tab === t ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-900'
             }`}
           >
@@ -123,42 +123,75 @@ export default function AdminPage() {
       {tab === 'users' && (
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           {loadingUsers ? <div className="p-6"><LoadingSkeleton lines={4} /></div> : (
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
-                <tr>
-                  <th className="px-4 py-3 text-left">Name</th>
-                  <th className="px-4 py-3 text-left">Email</th>
-                  <th className="px-4 py-3 text-left">Role</th>
-                  <th className="px-4 py-3 text-left">Status</th>
-                  <th className="px-4 py-3 text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {users?.length === 0 && <tr><td colSpan={5} className="text-center py-8 text-gray-500">No users</td></tr>}
+            <>
+              {/* Mobile card view */}
+              <div className="sm:hidden divide-y">
+                {users?.length === 0 && <div className="p-8 text-center text-gray-500">No users</div>}
                 {users?.map((u) => (
-                  <tr key={u.id}>
-                    <td className="px-4 py-3 font-medium">{u.full_name}</td>
-                    <td className="px-4 py-3 text-gray-600">{u.email}</td>
-                    <td className="px-4 py-3"><span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs">{u.role}</span></td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded text-xs ${u.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                        {u.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {u.is_active && (
-                        <button
-                          onClick={() => deactivateMutation.mutate(u.id)}
-                          className="text-red-500 hover:text-red-700 text-xs"
-                        >
-                          Deactivate
-                        </button>
-                      )}
-                    </td>
-                  </tr>
+                  <div key={u.id} className="p-4">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div>
+                        <p className="font-medium text-gray-900">{u.full_name}</p>
+                        <p className="text-sm text-gray-500">{u.email}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1.5">
+                        <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs">{u.role}</span>
+                        <span className={`px-2 py-0.5 rounded text-xs ${u.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                          {u.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                    </div>
+                    {u.is_active && (
+                      <button
+                        onClick={() => deactivateMutation.mutate(u.id)}
+                        className="text-red-500 hover:text-red-700 text-xs font-medium mt-1"
+                      >
+                        Deactivate
+                      </button>
+                    )}
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+              {/* Desktop table */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
+                    <tr>
+                      <th className="px-4 py-3 text-left">Name</th>
+                      <th className="px-4 py-3 text-left">Email</th>
+                      <th className="px-4 py-3 text-left">Role</th>
+                      <th className="px-4 py-3 text-left">Status</th>
+                      <th className="px-4 py-3 text-left">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {users?.length === 0 && <tr><td colSpan={5} className="text-center py-8 text-gray-500">No users</td></tr>}
+                    {users?.map((u) => (
+                      <tr key={u.id}>
+                        <td className="px-4 py-3 font-medium">{u.full_name}</td>
+                        <td className="px-4 py-3 text-gray-600">{u.email}</td>
+                        <td className="px-4 py-3"><span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs">{u.role}</span></td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-0.5 rounded text-xs ${u.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                            {u.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {u.is_active && (
+                            <button
+                              onClick={() => deactivateMutation.mutate(u.id)}
+                              className="text-red-500 hover:text-red-700 text-xs"
+                            >
+                              Deactivate
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       )}
@@ -223,34 +256,58 @@ export default function AdminPage() {
 
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">
             {loadingResources ? <div className="p-6"><LoadingSkeleton lines={4} /></div> : (
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
-                  <tr>
-                    <th className="px-4 py-3 text-left">Name</th>
-                    <th className="px-4 py-3 text-left">Unit</th>
-                    <th className="px-4 py-3 text-left">Description</th>
-                    <th className="px-4 py-3 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {resources?.length === 0 && <tr><td colSpan={4} className="text-center py-8 text-gray-500">No resources</td></tr>}
+              <>
+                {/* Mobile card view */}
+                <div className="sm:hidden divide-y">
+                  {resources?.length === 0 && <div className="p-8 text-center text-gray-500">No resources</div>}
                   {resources?.map((r) => (
-                    <tr key={r.id}>
-                      <td className="px-4 py-3 font-medium">{r.name}</td>
-                      <td className="px-4 py-3 text-gray-600">{r.unit}</td>
-                      <td className="px-4 py-3 text-gray-500 text-xs">{r.description ?? '—'}</td>
-                      <td className="px-4 py-3">
-                        <button
-                          onClick={() => deleteResourceMutation.mutate(r.id)}
-                          className="text-red-500 hover:text-red-700 text-xs"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
+                    <div key={r.id} className="p-4 flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-medium text-gray-900">{r.name}</p>
+                        <p className="text-sm text-gray-600">Unit: {r.unit}</p>
+                        {r.description && <p className="text-xs text-gray-500 mt-0.5">{r.description}</p>}
+                      </div>
+                      <button
+                        onClick={() => deleteResourceMutation.mutate(r.id)}
+                        className="text-red-500 hover:text-red-700 text-xs font-medium shrink-0"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+                {/* Desktop table */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
+                      <tr>
+                        <th className="px-4 py-3 text-left">Name</th>
+                        <th className="px-4 py-3 text-left">Unit</th>
+                        <th className="px-4 py-3 text-left">Description</th>
+                        <th className="px-4 py-3 text-left">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {resources?.length === 0 && <tr><td colSpan={4} className="text-center py-8 text-gray-500">No resources</td></tr>}
+                      {resources?.map((r) => (
+                        <tr key={r.id}>
+                          <td className="px-4 py-3 font-medium">{r.name}</td>
+                          <td className="px-4 py-3 text-gray-600">{r.unit}</td>
+                          <td className="px-4 py-3 text-gray-500 text-xs">{r.description ?? '—'}</td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => deleteResourceMutation.mutate(r.id)}
+                              className="text-red-500 hover:text-red-700 text-xs"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -259,34 +316,58 @@ export default function AdminPage() {
       {tab === 'points' && (
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           {loadingPoints ? <div className="p-6"><LoadingSkeleton lines={4} /></div> : (
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
-                <tr>
-                  <th className="px-4 py-3 text-left">Name</th>
-                  <th className="px-4 py-3 text-left">Address</th>
-                  <th className="px-4 py-3 text-left">Coordinates</th>
-                  <th className="px-4 py-3 text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {points?.length === 0 && <tr><td colSpan={4} className="text-center py-8 text-gray-500">No delivery points</td></tr>}
+            <>
+              {/* Mobile card view */}
+              <div className="sm:hidden divide-y">
+                {points?.length === 0 && <div className="p-8 text-center text-gray-500">No delivery points</div>}
                 {points?.map((p) => (
-                  <tr key={p.id}>
-                    <td className="px-4 py-3 font-medium">{p.name}</td>
-                    <td className="px-4 py-3 text-gray-600">{p.address}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs font-mono">{p.latitude}, {p.longitude}</td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => deletePointMutation.mutate(p.id)}
-                        className="text-red-500 hover:text-red-700 text-xs"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
+                  <div key={p.id} className="p-4 flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-medium text-gray-900">{p.name}</p>
+                      <p className="text-sm text-gray-600">{p.address}</p>
+                      <p className="text-xs text-gray-400 font-mono mt-0.5">{p.latitude}, {p.longitude}</p>
+                    </div>
+                    <button
+                      onClick={() => deletePointMutation.mutate(p.id)}
+                      className="text-red-500 hover:text-red-700 text-xs font-medium shrink-0"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+              {/* Desktop table */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
+                    <tr>
+                      <th className="px-4 py-3 text-left">Name</th>
+                      <th className="px-4 py-3 text-left">Address</th>
+                      <th className="px-4 py-3 text-left">Coordinates</th>
+                      <th className="px-4 py-3 text-left">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {points?.length === 0 && <tr><td colSpan={4} className="text-center py-8 text-gray-500">No delivery points</td></tr>}
+                    {points?.map((p) => (
+                      <tr key={p.id}>
+                        <td className="px-4 py-3 font-medium">{p.name}</td>
+                        <td className="px-4 py-3 text-gray-600">{p.address}</td>
+                        <td className="px-4 py-3 text-gray-500 text-xs font-mono">{p.latitude}, {p.longitude}</td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => deletePointMutation.mutate(p.id)}
+                            className="text-red-500 hover:text-red-700 text-xs"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       )}
@@ -300,7 +381,7 @@ export default function AdminPage() {
                 Changing demand automatically reassigns all pending orders based on updated urgency weights.
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Delivery Point</label>
                 <select
@@ -357,36 +438,60 @@ export default function AdminPage() {
                   No demand overrides set — all resources use default (Normal) demand.
                 </div>
               ) : (
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
-                    <tr>
-                      <th className="px-4 py-3 text-left">Delivery Point</th>
-                      <th className="px-4 py-3 text-left">Resource</th>
-                      <th className="px-4 py-3 text-left">Demand Level</th>
-                      <th className="px-4 py-3 text-left">Last Updated</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
+                <>
+                  {/* Mobile card view */}
+                  <div className="sm:hidden divide-y">
                     {demandSettings?.map((d) => {
                       const point = points?.find((p) => p.id === d.point_id);
                       const resource = resources?.find((r) => r.id === d.resource_id);
                       return (
-                        <tr key={d.id}>
-                          <td className="px-4 py-3 font-medium">{point?.name ?? `Point #${d.point_id}`}</td>
-                          <td className="px-4 py-3 text-gray-600">{resource?.name ?? `Resource #${d.resource_id}`}</td>
-                          <td className="px-4 py-3">
+                        <div key={d.id} className="p-4">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <p className="font-medium text-gray-900">{point?.name ?? `Point #${d.point_id}`}</p>
                             <span className={`px-2 py-0.5 rounded text-xs font-medium capitalize ${demandBadgeClass[d.level]}`}>
                               {d.level}
                             </span>
-                          </td>
-                          <td className="px-4 py-3 text-gray-400 text-xs">
-                            {new Date(d.updated_at).toLocaleString()}
-                          </td>
-                        </tr>
+                          </div>
+                          <p className="text-sm text-gray-600">{resource?.name ?? `Resource #${d.resource_id}`}</p>
+                          <p className="text-xs text-gray-400 mt-1">{new Date(d.updated_at).toLocaleString()}</p>
+                        </div>
                       );
                     })}
-                  </tbody>
-                </table>
+                  </div>
+                  {/* Desktop table */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
+                        <tr>
+                          <th className="px-4 py-3 text-left">Delivery Point</th>
+                          <th className="px-4 py-3 text-left">Resource</th>
+                          <th className="px-4 py-3 text-left">Demand Level</th>
+                          <th className="px-4 py-3 text-left">Last Updated</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {demandSettings?.map((d) => {
+                          const point = points?.find((p) => p.id === d.point_id);
+                          const resource = resources?.find((r) => r.id === d.resource_id);
+                          return (
+                            <tr key={d.id}>
+                              <td className="px-4 py-3 font-medium">{point?.name ?? `Point #${d.point_id}`}</td>
+                              <td className="px-4 py-3 text-gray-600">{resource?.name ?? `Resource #${d.resource_id}`}</td>
+                              <td className="px-4 py-3">
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium capitalize ${demandBadgeClass[d.level]}`}>
+                                  {d.level}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-gray-400 text-xs">
+                                {new Date(d.updated_at).toLocaleString()}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )
             )}
           </div>

@@ -34,7 +34,7 @@ export default function OrderDetailDrawer({ order, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-white shadow-xl flex flex-col h-full overflow-y-auto">
+      <div className="relative w-full sm:max-w-md bg-white shadow-xl flex flex-col h-full overflow-y-auto">
         <div className="p-6 border-b flex items-center justify-between">
           <h2 className="text-lg font-semibold">Order #{order.order_id}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
