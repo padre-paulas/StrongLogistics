@@ -1,12 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import RoleGuard from './RoleGuard';
-
-const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: '📊' },
-  { to: '/orders', label: 'Orders', icon: '📦' },
-  { to: '/map', label: 'Map', icon: '🗺️' },
-];
 
 interface SidebarProps {
   open: boolean;
@@ -14,8 +9,15 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  const navItems = [
+    { to: '/dashboard', label: t('nav.dashboard'), icon: '📊' },
+    { to: '/orders', label: t('nav.orders'), icon: '📦' },
+    { to: '/map', label: t('nav.map'), icon: '🗺️' },
+  ];
 
   const handleLogout = () => {
     logout();
@@ -82,9 +84,21 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               }
             >
               <span aria-hidden="true" className="text-base">⚙️</span>
-              Admin
+              {t('nav.admin')}
             </NavLink>
           </RoleGuard>
+          <NavLink
+            to="/settings"
+            onClick={onClose}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-colors ${
+                isActive ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+              }`
+            }
+          >
+            <span aria-hidden="true" className="text-base">🛠️</span>
+            {t('nav.settings')}
+          </NavLink>
         </nav>
 
         {/* User info + logout */}

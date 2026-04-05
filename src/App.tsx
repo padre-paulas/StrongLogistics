@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { PreferencesProvider } from './context/PreferencesContext';
 import PrivateRoute from './components/PrivateRoute';
 import RoleGuard from './components/RoleGuard';
 import Layout from './components/Layout';
@@ -12,6 +13,7 @@ import DashboardPage from './pages/DashboardPage';
 import OrdersPage from './pages/OrdersPage';
 import MapPage from './pages/MapPage';
 import AdminPage from './pages/AdminPage';
+import SettingsPage from './pages/SettingsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,55 +24,65 @@ const queryClient = new QueryClient({
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ToastProvider>
-          <NotificationProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/signup" element={<SignUpPage />} />
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route
-                  path="/dashboard"
-                  element={
-                    <PrivateRoute>
-                      <Layout><DashboardPage /></Layout>
-                    </PrivateRoute>
-                  }
-                />
-                <Route
-                  path="/orders"
-                  element={
-                    <PrivateRoute>
-                      <Layout><OrdersPage /></Layout>
-                    </PrivateRoute>
-                  }
-                />
-                <Route
-                  path="/map"
-                  element={
-                    <PrivateRoute>
-                      <Layout><MapPage /></Layout>
-                    </PrivateRoute>
-                  }
-                />
-                <Route
-                  path="/admin"
-                  element={
-                    <PrivateRoute>
-                      <Layout>
-                        <RoleGuard allowedRoles={['admin']} fallback={<div className="text-center py-12 text-gray-500">Access denied</div>}>
-                          <AdminPage />
-                        </RoleGuard>
-                      </Layout>
-                    </PrivateRoute>
-                  }
-                />
-              </Routes>
-            </BrowserRouter>
-          </NotificationProvider>
-        </ToastProvider>
-      </AuthProvider>
+      <PreferencesProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <NotificationProvider>
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/signup" element={<SignUpPage />} />
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <PrivateRoute>
+                        <Layout><DashboardPage /></Layout>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/orders"
+                    element={
+                      <PrivateRoute>
+                        <Layout><OrdersPage /></Layout>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/map"
+                    element={
+                      <PrivateRoute>
+                        <Layout><MapPage /></Layout>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin"
+                    element={
+                      <PrivateRoute>
+                        <Layout>
+                          <RoleGuard allowedRoles={['admin']} fallback={<div className="text-center py-12 text-gray-500">Access denied</div>}>
+                            <AdminPage />
+                          </RoleGuard>
+                        </Layout>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/settings"
+                    element={
+                      <PrivateRoute>
+                        <Layout><SettingsPage /></Layout>
+                      </PrivateRoute>
+                    }
+                  />
+                </Routes>
+              </BrowserRouter>
+            </NotificationProvider>
+          </ToastProvider>
+        </AuthProvider>
+      </PreferencesProvider>
     </QueryClientProvider>
   );
 }
