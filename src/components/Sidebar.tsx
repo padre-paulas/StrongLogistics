@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import RoleGuard from './RoleGuard';
 
 const navItems = [
@@ -13,6 +14,13 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
   return (
     <>
       {/* Mobile backdrop overlay */}
@@ -78,6 +86,22 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             </NavLink>
           </RoleGuard>
         </nav>
+
+        {/* User info + logout */}
+        <div className="p-4 border-t border-gray-700">
+          {user?.full_name && (
+            <p className="text-gray-400 text-xs mb-3 truncate">{user.full_name}</p>
+          )}
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-red-400 hover:bg-gray-800 hover:text-red-300 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
+            </svg>
+            Logout
+          </button>
+        </div>
       </aside>
     </>
   );

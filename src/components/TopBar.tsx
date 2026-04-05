@@ -1,6 +1,5 @@
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
-import { useNavigate } from 'react-router-dom';
 
 interface TopBarProps {
   title: string;
@@ -8,13 +7,7 @@ interface TopBarProps {
 }
 
 export default function TopBar({ title, onMenuClick }: TopBarProps) {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  const { user } = useAuth();
 
   return (
     <header className="h-16 bg-white border-b flex items-center justify-between px-4 sm:px-6 shrink-0">
@@ -34,12 +27,6 @@ export default function TopBar({ title, onMenuClick }: TopBarProps) {
       <div className="flex items-center gap-2 sm:gap-4">
         <NotificationBell />
         <span className="hidden sm:inline text-sm text-gray-600 max-w-[150px] truncate">{user?.full_name}</span>
-        <button
-          onClick={handleLogout}
-          className="text-sm text-red-500 hover:text-red-700 font-medium px-2 py-1.5 rounded hover:bg-red-50 transition-colors"
-        >
-          Logout
-        </button>
       </div>
     </header>
   );
