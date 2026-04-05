@@ -138,15 +138,20 @@ class LogisticsOptimizer:
 
             pickup_node = self.manager.NodeToIndex(pickup_index)
             delivery_node = self.manager.NodeToIndex(delivery_index)
+            
+            if pickup_node == -1 or delivery_node == -1:
+                continue
 
-            # Enforce pickup before delivery
-            self.routing.AddPickupAndDelivery(pickup_node, delivery_node)
+            # Prevent fatal C++ crash if pickup and delivery are the EXACT same node
+            if pickup_node != delivery_node:
+                # Enforce pickup before delivery
+                self.routing.AddPickupAndDelivery(pickup_node, delivery_node)
 
-            # Same vehicle must handle both pickup and delivery
-            self.routing.solver().Add(
-                self.routing.VehicleVar(pickup_node) ==
-                self.routing.VehicleVar(delivery_node)
-            )
+                # Same vehicle must handle both pickup and delivery
+                self.routing.solver().Add(
+                    self.routing.VehicleVar(pickup_node) ==
+                    self.routing.VehicleVar(delivery_node)
+                )
     
     def _setup_capacity_constraints(self, order_demand: dict):
         """
@@ -310,41 +315,38 @@ class LogisticsOptimizer:
     def _setup_node_disjunctions(self, orders: List[Order]):
         """
         Set up disjunctions (penalties for skipping nodes).
-        This allows the solver to skip unused locations instead of crashing.
+        This allows the solver to skip locations that aren't part of any order.
+        Pickup and delivery nodes are kept mandatory to ensure orders are fulfilled.
         """
         active_nodes = set()
-        
-        # Add penalty for unserved high-priority orders
+
+        # Track which nodes are required for orders (keep them mandatory)
+        required_nodes = set()
         for order in orders:
             pickup_index = self.location_id_to_index[order.from_location_id]
             pickup_node = self.manager.NodeToIndex(pickup_index)
-            
             delivery_index = self.location_id_to_index[order.to_location_id]
             delivery_node = self.manager.NodeToIndex(delivery_index)
-            
-            # Higher penalty for higher priority orders
-            penalty = order.priority * 100000
-            
+
             if pickup_node != -1:
-                self.routing.AddDisjunction([pickup_node], penalty)
+                required_nodes.add(pickup_node)
                 active_nodes.add(pickup_node)
-                
             if delivery_node != -1:
-                self.routing.AddDisjunction([delivery_node], penalty)
+                required_nodes.add(delivery_node)
                 active_nodes.add(delivery_node)
-                
-        # For ANY un-ordered location on the map, we MUST give it a 0 penalty 
-        # so OR-Tools allows vehicles to skip them entirely.
+
+        # For locations NOT involved in orders, add disjunction with 0 penalty
+        # so OR-Tools can skip them entirely
         depots = set()
         for v in self.vehicles:
             depots.add(self.manager.NodeToIndex(self.location_id_to_index[v.start_depot_id]))
             depots.add(self.manager.NodeToIndex(self.location_id_to_index[v.end_depot_id]))
-            
+
         num_locations = len(self.locations)
         for i in range(num_locations):
             idx = self.manager.NodeToIndex(i)
-            # If not a required depot, and not an active order node, allow skipping for free
-            if idx != -1 and idx not in depots and idx not in active_nodes:
+            # Skip depots and required order nodes - only allow skipping unused locations
+            if idx != -1 and idx not in depots and idx not in required_nodes:
                 self.routing.AddDisjunction([idx], 0)
     
     def _extract_solution(self, solution) -> OptimizationResult:
@@ -466,8 +468,13 @@ class LogisticsOptimizer:
                     f"Capacity exceeded: {route.total_load:.2f} > {vehicle.capacity}"
                 )
                 all_violations.extend(route.constraint_violations)
-            
-            if route.stops:  # Only count if vehicle was used
+
+            # Only count vehicle as used if it actually visited non-depot locations
+            non_depot_stops = [
+                s for s in route.stops
+                if s.location_type not in (NodeType.DEPOT,) or s.volume_loaded > 0 or s.volume_unloaded > 0
+            ]
+            if non_depot_stops:
                 total_distance += route.total_distance
                 total_vehicles_used += 1
             

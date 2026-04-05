@@ -38,7 +38,7 @@ def test_1_simple_pickup_delivery():
         Vehicle(id=1, depot_id=0, capacity=10.0, max_distance=100.0)
     ]
     
-    distance_matrix = create_distance_matrix(locations)
+    distance_matrix = create_distance_matrix(locations, use_haversine=False)
     print("\nDistances:")
     print(f"  Depot -> Supplier: {distance_matrix.matrix[0][1]:.1f} km")
     print(f"  Supplier -> Customer: {distance_matrix.matrix[1][2]:.1f} km")
@@ -91,7 +91,7 @@ def test_2_multiple_orders_single_vehicle():
         Vehicle(id=1, depot_id=0, capacity=50.0, max_distance=200.0)
     ]
     
-    distance_matrix = create_distance_matrix(locations)
+    distance_matrix = create_distance_matrix(locations, use_haversine=False)
     optimizer = LogisticsOptimizer(locations, vehicles, orders, distance_matrix)
     result = optimizer.solve(time_limit_seconds=5)
     
@@ -135,7 +135,7 @@ def test_3_multiple_vehicles():
         Vehicle(id=2, depot_id=0, capacity=20.0, max_distance=100.0),
     ]
     
-    distance_matrix = create_distance_matrix(locations)
+    distance_matrix = create_distance_matrix(locations, use_haversine=False)
     optimizer = LogisticsOptimizer(locations, vehicles, orders, distance_matrix)
     result = optimizer.solve(time_limit_seconds=5)
     
@@ -174,7 +174,7 @@ def test_4_capacity_constraint_violation():
         Vehicle(id=1, depot_id=0, capacity=20.0, max_distance=100.0)  # Only 20 m³ capacity
     ]
     
-    distance_matrix = create_distance_matrix(locations)
+    distance_matrix = create_distance_matrix(locations, use_haversine=False)
     optimizer = LogisticsOptimizer(locations, vehicles, orders, distance_matrix)
     result = optimizer.solve(time_limit_seconds=5)
     
@@ -213,7 +213,7 @@ def test_5_distance_constraint():
         Vehicle(id=1, depot_id=0, capacity=20.0, max_distance=30.0)  # Tight limit
     ]
     
-    distance_matrix = create_distance_matrix(locations)
+    distance_matrix = create_distance_matrix(locations, use_haversine=False)
     print(f"\nRequired distance: ~40 km (Depot->Supplier->Customer->Depot)")
     print(f"Vehicle max distance: 30 km")
     
@@ -255,7 +255,7 @@ def test_6_priority_orders():
         Vehicle(id=1, depot_id=0, capacity=15.0, max_distance=50.0)
     ]
     
-    distance_matrix = create_distance_matrix(locations)
+    distance_matrix = create_distance_matrix(locations, use_haversine=False)
     optimizer = LogisticsOptimizer(locations, vehicles, orders, distance_matrix)
     result = optimizer.solve(time_limit_seconds=5)
     

@@ -64,6 +64,20 @@ class Order:
     time_window_start: Optional[float] = None  # Earliest delivery time
     time_window_end: Optional[float] = None    # Latest delivery time
 
+    def __post_init__(self):
+        if self.volume < 0:
+            raise ValueError(
+                f"Order {self.id}: volume cannot be negative (got {self.volume})"
+            )
+        if self.weight < 0:
+            raise ValueError(
+                f"Order {self.id}: weight cannot be negative (got {self.weight})"
+            )
+        if self.priority < 0:
+            raise ValueError(
+                f"Order {self.id}: priority cannot be negative (got {self.priority})"
+            )
+
 
 @dataclass
 class Vehicle:
@@ -91,7 +105,6 @@ class Vehicle:
 @dataclass
 class DistanceMatrix:
     """Stores pre-calculated distances between all locations"""
-    locations: List[Location]
     locations: List[Location]
     matrix: List[List[float]]  # matrix[i][j] = distance from location i to j
     durations: List[List[float]] = field(default_factory=list) # Time in seconds from i to j

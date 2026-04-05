@@ -148,8 +148,8 @@ def run_example_optimization():
     # =====================================================================
     print("\n4. Creating distance matrix...")
     print("   (Using Euclidean distances for this example)")
-    
-    distance_matrix = create_distance_matrix(locations)
+
+    distance_matrix = create_distance_matrix(locations, use_haversine=False)
     
     # Print distance matrix
     print("\n   Distance Matrix (km):")
@@ -286,7 +286,7 @@ def run_simple_test():
         Vehicle(id=1, depot_id=0, capacity=10.0, max_distance=100.0)
     ]
 
-    distance_matrix = create_distance_matrix(locations)
+    distance_matrix = create_distance_matrix(locations, use_haversine=False)
 
     optimizer = LogisticsOptimizer(locations, vehicles, orders, distance_matrix)
     result = optimizer.solve(time_limit_seconds=5)
@@ -308,14 +308,14 @@ if __name__ == "__main__":
     ]
 
     orders = [
-    
+        Order(id=1, from_location_id=1, to_location_id=2, volume=5.0),
     ]
 
     vehicles = [
         Vehicle(id=1, depot_id=0, capacity=100.0, max_distance=1000.0)
     ]
 
-    distance_matrix = create_distance_matrix(locations)
+    distance_matrix = create_distance_matrix(locations, use_haversine=False)
 
     optimizer = LogisticsOptimizer(locations, vehicles, orders, distance_matrix)
     result = optimizer.solve(time_limit_seconds=5)
