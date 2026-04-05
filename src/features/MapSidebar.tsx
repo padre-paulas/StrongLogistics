@@ -32,14 +32,14 @@ export default function MapSidebar({ point, resources, onClose, onCreateOrder }:
   });
 
   return (
-    <div className="w-80 bg-white rounded-xl shadow-lg flex flex-col overflow-hidden shrink-0">
+    <div className="fixed inset-x-0 bottom-0 sm:static sm:inset-auto w-full sm:w-80 bg-white rounded-t-xl sm:rounded-xl shadow-lg flex flex-col overflow-hidden sm:shrink-0 max-h-[70vh] sm:max-h-none z-[1001] sm:z-auto">
       <div className="p-4 border-b flex items-center justify-between bg-gray-50">
-        <div>
-          <h3 className="font-semibold text-gray-900">{point.name}</h3>
-          <p className="text-xs text-gray-500">{point.address}</p>
+        <div className="min-w-0 flex-1">
+          <h3 className="font-semibold text-gray-900 truncate">{point.name}</h3>
+          <p className="text-xs text-gray-500 truncate">{point.address}</p>
           <p className="text-xs text-gray-400 font-mono">{point.latitude.toFixed(4)}, {point.longitude.toFixed(4)}</p>
         </div>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1 ml-2" aria-label="Close panel">✕</button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">

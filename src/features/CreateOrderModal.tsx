@@ -71,14 +71,14 @@ export default function CreateOrderModal({ isOpen, onClose, initialPointId, onCr
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+      <div className="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg mx-0 sm:mx-4 overflow-hidden fixed bottom-0 sm:static max-h-[95vh] flex flex-col">
         <div className="p-6 border-b flex items-center justify-between">
           <h2 className="text-lg font-semibold">Create Order</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
         </div>
-        <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="p-6 space-y-4 overflow-y-auto flex-1">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Point</label>
             <select

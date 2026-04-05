@@ -119,8 +119,8 @@ export default function MapPage() {
   }
 
   return (
-    <div className="flex h-full gap-4" style={{ minHeight: 'calc(100vh - 10rem)' }}>
-      <div className="flex-1 relative rounded-xl overflow-hidden shadow-sm">
+    <div className="flex flex-col sm:flex-row h-full gap-3 sm:gap-4" style={{ minHeight: 'calc(100vh - 10rem)' }}>
+      <div className="flex-1 relative rounded-xl overflow-hidden shadow-sm" style={{ minHeight: '300px' }}>
         {isLoading && (
           <div className="absolute inset-0 bg-white/80 z-[1000] flex items-center justify-center">
             <div className="text-gray-500">Loading map...</div>
@@ -189,7 +189,7 @@ export default function MapPage() {
 
       {/* Route blockage management panel */}
       {showBlockPanel && (
-        <div className="w-72 bg-white rounded-xl shadow-lg flex flex-col overflow-hidden shrink-0">
+        <div className="fixed inset-x-0 bottom-0 sm:static sm:inset-auto w-full sm:w-72 bg-white rounded-t-xl sm:rounded-xl shadow-lg flex flex-col overflow-hidden sm:shrink-0 max-h-[70vh] sm:max-h-none z-[1001] sm:z-auto">
           <div className="p-4 border-b flex items-center justify-between bg-gray-50">
             <h3 className="font-semibold text-gray-900">🚫 Route Blockages</h3>
             <button onClick={() => setShowBlockPanel(false)} className="text-gray-400 hover:text-gray-600">✕</button>
@@ -258,6 +258,15 @@ export default function MapPage() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Mobile backdrop for sidepanels */}
+      {(selectedPoint || showBlockPanel) && (
+        <div
+          className="fixed inset-0 bg-black/30 z-[1000] sm:hidden"
+          onClick={() => { setSelectedPoint(null); setShowBlockPanel(false); }}
+          aria-hidden="true"
+        />
       )}
 
       {selectedPoint && (
